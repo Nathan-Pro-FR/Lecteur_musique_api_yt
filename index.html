@@ -1,86 +1,76 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>YouTube Music Player</title>
-
-<link rel="stylesheet" href="style.css">
-
-<script src="https://www.youtube.com/iframe_api"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Music Player</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div class="app">
 
-<div class="sidebar">
+```
+<aside class="sidebar">
+    <h1>🎵 Playlist</h1>
 
-<input
-id="search"
-placeholder="Rechercher..."
->
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Rechercher..."
+    >
 
-<div id="playlist"></div>
+    <div id="playlist"></div>
+</aside>
 
-</div>
+<main class="player-section">
 
-<div class="main">
+    <div class="cover-container">
+        <img id="cover" src="" alt="">
+    </div>
 
-<div class="cover-container">
-<img id="cover">
-</div>
+    <h2 id="songTitle">Chargement...</h2>
 
-<h2 id="title"></h2>
+    <div id="youtube-player"></div>
 
-<div id="player"></div>
+    <div class="progress-container">
+        <input
+            type="range"
+            id="progressBar"
+            min="0"
+            max="100"
+            value="0"
+        >
+    </div>
 
-<div class="progress-container">
+    <div class="controls">
 
-<input
-type="range"
-id="progress"
-min="0"
-max="100"
-value="0"
->
+        <button id="shuffleBtn">🔀</button>
+        <button id="prevBtn">⏮</button>
+        <button id="playBtn">▶</button>
+        <button id="nextBtn">⏭</button>
+        <button id="repeatBtn">🔁</button>
 
-</div>
+    </div>
 
-<div class="controls">
+    <div class="volume-box">
+        🔊
+        <input
+            type="range"
+            id="volumeSlider"
+            min="0"
+            max="100"
+            value="80"
+        >
+    </div>
 
-<button id="shuffleBtn">🔀</button>
-
-<button id="prevBtn">⏮</button>
-
-<button id="playBtn">▶</button>
-
-<button id="nextBtn">⏭</button>
-
-<button id="repeatBtn">🔁</button>
-
-</div>
-
-<div class="volume">
-
-🔊
-
-<input
-id="volume"
-type="range"
-min="0"
-max="100"
-value="50"
->
+</main>
+```
 
 </div>
 
-<button id="miniBtn">
-Mini Player
-</button>
-
-</div>
-
-</div>
+<script src="https://www.youtube.com/iframe_api"></script>
 
 <script src="app.js"></script>
 
