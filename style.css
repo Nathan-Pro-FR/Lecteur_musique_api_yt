@@ -1,120 +1,248 @@
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
+:root {
+    --bg-main: #030303;
+    --bg-card: #0f0f0f;
+    --bg-track-hover: #212121;
+    --text-main: #ffffff;
+    --text-muted: #aaa;
+    --accent: #f00; /* Rouge YouTube */
 }
 
-body{
-background:#0f0f0f;
-color:white;
-height:100vh;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-.app{
-display:flex;
-height:100vh;
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    height: 100vh;
 }
 
-.sidebar{
-width:350px;
-background:#181818;
-padding:20px;
-overflow-y:auto;
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
-.sidebar h1{
-margin-bottom:15px;
+/* Zone principale */
+.main-content {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 90px);
+    padding: 20px;
+    gap: 20px;
 }
 
-#searchInput{
-width:100%;
-padding:10px;
-border:none;
-border-radius:12px;
-margin-bottom:15px;
+/* Section Vidéo */
+.video-container {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-.song{
-display:flex;
-gap:10px;
-align-items:center;
-padding:10px;
-border-radius:12px;
-cursor:pointer;
-transition:.2s;
+.video-wrapper {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
 }
 
-.song:hover
-
-.song img{
-width:60px;
-height:60px;
-border-radius:10px;
+#youtube-iframe-player {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
-.song-info{
-overflow:hidden;
+/* Section Playlist */
+.playlist-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid #222;
 }
 
-.song-info p{
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
+.search-box input {
+    width: 100%;
+    padding: 12px;
+    background-color: #222;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 15px;
+    outline: none;
 }
 
-.player-section{
-flex:1;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-gap:20px;
-padding:20px;
+.search-box input:focus {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
 }
 
-.cover-container img{
-width:320px;
-height:320px;
-object-fit:cover;
-border-radius:20px;
-box-shadow:0 0 40px rgba(0,0,0,.5);
+.tracks-list {
+    flex: 1;
+    overflow-y: auto;
 }
 
-.controls{
-display:flex;
-gap:15px;
+/* Style d'une ligne de musique */
+.track-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
-.controls button{
-border:none;
-padding:15px 20px;
-border-radius:50px;
-cursor:pointer;
-font-size:18px;
+.track-item:hover {
+    background-color: var(--bg-track-hover);
 }
 
-#playBtn{
-background:#ff0000;
-color:white;
+.track-item.active {
+    background-color: #2c1a1a;
+    border-left: 3px solid var(--accent);
 }
 
-.progress-container{
-width:70%;
+.track-item img {
+    width: 55px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
 }
 
-#progressBar{
-width:100%;
+.track-item .title {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-main);
 }
 
-.volume-box{
-display:flex;
-align-items:center;
-gap:10px;
+.loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding-top: 40px;
 }
 
-#youtube-player{
-width:1px;
-height:1px;
-opacity:0;
+/* Barre de contrôles du bas */
+.controls-bar {
+    height: 90px;
+    background-color: #111;
+    border-top: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
 }
+
+.now-playing {
+    display: flex;
+    align-items: center;
+    width: 25%;
+}
+
+.now-playing img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
+}
+
+.track-title {
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Bloc central boutons + barre progression */
+.player-core {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%;
+}
+
+.buttons {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.buttons button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.1s;
+}
+
+.buttons button:hover {
+    color: var(--text-main);
+}
+
+.buttons button:active {
+    transform: scale(0.95);
+}
+
+.buttons button.active {
+    color: var(--accent);
+}
+
+.buttons .play-btn {
+    font-size: 26px;
+    color: #fff;
+}
+
+.progress-area {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.progress-area input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+    height: 4px;
+}
+
+/* Bloc Volume */
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 20%;
+    justify-content: flex-end;
+}
+
+.volume-container input[type="range"] {
+    accent-color: #fff;
+    cursor: pointer;
+    width: 80px;
+}
+
+/* Scrollbar Customization */
+.tracks-list::-webkit-scrollbar { width: 6px; }
+.tracks-list::-webkit-scrollbar-track { background: transparent; }
+.tracks-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+.tracks-list::-webkit-scrollbar-thumb:hover { background: #444; }
