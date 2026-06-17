@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>YouTube Music Player</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://www.youtube.com/iframe_api"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="sidebar">
+
+<input
+id="search"
+placeholder="Rechercher..."
+>
+
+<div id="playlist"></div>
+
+</div>
+
+<div class="main">
+
+<div class="cover-container">
+<img id="cover">
+</div>
+
+<h2 id="title"></h2>
+
+<div id="player"></div>
+
+<div class="progress-container">
+
+<input
+type="range"
+id="progress"
+min="0"
+max="100"
+value="0"
+>
+
+</div>
+
+<div class="controls">
+
+<button id="shuffleBtn">🔀</button>
+
+<button id="prevBtn">⏮</button>
+
+<button id="playBtn">▶</button>
+
+<button id="nextBtn">⏭</button>
+
+<button id="repeatBtn">🔁</button>
+
+</div>
+
+<div class="volume">
+
+🔊
+
+<input
+id="volume"
+type="range"
+min="0"
+max="100"
+value="50"
+>
+
+</div>
+
+<button id="miniBtn">
+Mini Player
+</button>
+
+</div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
