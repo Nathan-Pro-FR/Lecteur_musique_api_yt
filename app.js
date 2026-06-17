@@ -1,8 +1,8 @@
 let player;
-let originalPlaylist = []; // Stocke la playlist de base
-let displayPlaylist = [];  // Stocke la playlist filtrée par la recherche
-let playbackOrder = [];    // Stocke l'ordre de lecture (normal ou mélangé)
-let currentIndex = 0;      // Index du morceau en cours dans playbackOrder
+let originalPlaylist = []; 
+let displayPlaylist = [];  
+let playbackOrder = [];    
+let currentIndex = 0;      
 
 let isShuffle = false;
 let isRepeat = false;
@@ -15,11 +15,12 @@ function onYouTubeIframeAPIReady() {
         width: '100%',
         playerVars: {
             'autoplay': 0,
-            'controls': 0,        // Utilise nos propres contrôles HTML personnalisés
+            'controls': 0,        
             'disablekb': 1,
-            'fs': 0,              // Désactive le plein écran natif
+            'fs': 0,              
             'modestbranding': 1,
-            'rel': 0
+            'rel': 0,
+            'origin': window.location.origin // Supprime les erreurs postMessage de la console
         },
         events: {
             'onReady': onPlayerReady,
@@ -37,7 +38,6 @@ async function onPlayerReady() {
 // 3. Récupération des titres via la fonction Netlify Serverless
 async function fetchPlaylist() {
     try {
-        // En production, pointe automatiquement vers la Netlify function
         const response = await fetch('/.netlify/functions/get-playlist');
         if (!response.ok) throw new Error();
         
@@ -55,13 +55,11 @@ async function fetchPlaylist() {
 function buildPlaybackOrder() {
     playbackOrder = [...originalPlaylist];
     if (isShuffle) {
-        // Algorithme de mélange de Fisher-Yates
         for (let i = playbackOrder.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [playbackOrder[i], playbackOrder[j]] = [playbackOrder[j], playbackOrder[i]];
         }
     }
-    // Repositionne le currentIndex sur le morceau actif s'il y en a un
     const currentTrack = originalPlaylist[currentIndex];
     if (currentTrack) {
         currentIndex = playbackOrder.findIndex(t => t.id === currentTrack.id);
@@ -83,7 +81,6 @@ function renderPlaylist(tracks) {
         row.classList.add('track-item');
         row.setAttribute('data-id', track.id);
         
-        // Active le style si c'est la vidéo en cours
         const currentPlayingTrack = playbackOrder[currentIndex];
         if (currentPlayingTrack && track.id === currentPlayingTrack.id) {
             row.classList.add('active');
@@ -95,7 +92,6 @@ function renderPlaylist(tracks) {
         `;
         
         row.addEventListener('click', () => {
-            // Trouve l'index dans l'ordre de lecture actuel
             const index = playbackOrder.findIndex(t => t.id === track.id);
             if (index !== -1) {
                 currentIndex = index;
@@ -111,11 +107,9 @@ function renderPlaylist(tracks) {
 function playTrack(track) {
     if (!track) return;
 
-    // Mise à jour de la barre du bas (Mini-player)
     document.getElementById('current-title').innerText = track.title;
     document.getElementById('current-cover').src = track.thumbnail;
 
-    // Met en surbrillance l'élément dans la liste visible
     document.querySelectorAll('.track-item').forEach(item => {
         item.classList.remove('active');
         if (item.getAttribute('data-id') === track.id) {
@@ -123,7 +117,6 @@ function playTrack(track) {
         }
     });
 
-    // Charge la vidéo YouTube
     player.loadVideoById(track.id);
     document.getElementById('btn-play-pause').innerText = "⏸️";
 }
@@ -140,10 +133,9 @@ function onPlayerStateChange(event) {
         clearInterval(progressUpdateInterval);
     }
 
-    // Gestion automatique du morceau suivant (Lecture continue)
     if (event.data === YT.PlayerState.ENDED) {
         if (isRepeat) {
-            player.playVideo(); // Relance la même vidéo
+            player.playVideo(); 
         } else {
             nextTrack();
         }
@@ -157,6 +149,7 @@ function nextTrack() {
     playTrack(playbackOrder[currentIndex]);
 }
 
+// Navigation corrigée : l'index précédent se gère selon la liste playbackOrder en cours
 function prevTrack() {
     if (playbackOrder.length === 0) return;
     currentIndex = (currentIndex - 1 + playbackOrder.length) % playbackOrder.length;
@@ -198,12 +191,10 @@ function formatTime(seconds) {
 
 // 10. Initialisation des Écouteurs d'Événements du DOM
 function setupEventListeners() {
-    // Boutons multimédias
     document.getElementById('btn-play-pause').addEventListener('click', togglePlay);
     document.getElementById('btn-next').addEventListener('click', nextTrack);
     document.getElementById('btn-prev').addEventListener('click', prevTrack);
 
-    // Shuffle (Aléatoire)
     const shuffleBtn = document.getElementById('btn-shuffle');
     shuffleBtn.addEventListener('click', () => {
         isShuffle = !isShuffle;
@@ -211,14 +202,12 @@ function setupEventListeners() {
         buildPlaybackOrder();
     });
 
-    // Repeat (Boucle)
     const repeatBtn = document.getElementById('btn-repeat');
     repeatBtn.addEventListener('click', () => {
         isRepeat = !isRepeat;
         repeatBtn.classList.toggle('active', isRepeat);
     });
 
-    // Barre de progression cliquable
     const progressBar = document.getElementById('progress-bar');
     progressBar.addEventListener('input', (e) => {
         const total = player.getDuration();
@@ -228,7 +217,6 @@ function setupEventListeners() {
         }
     });
 
-    // Gestion du Volume
     const volumeSlider = document.getElementById('volume-slider');
     volumeSlider.addEventListener('input', (e) => {
         const vol = e.target.value;
@@ -236,7 +224,6 @@ function setupEventListeners() {
         document.getElementById('volume-icon').innerText = vol == 0 ? "🔇" : vol < 40 ? "🔈" : "🔊";
     });
 
-    // Barre de recherche dans la playlist
     document.getElementById('search-bar').addEventListener('input', (e) => {
         const searchWord = e.target.value.toLowerCase().trim();
         displayPlaylist = originalPlaylist.filter(track => 
