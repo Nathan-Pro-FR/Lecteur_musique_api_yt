@@ -1,4 +1,4 @@
-const API_KEY = "YOUR_API_KEY";
+const API_KEY = process.env.YOUTUBE_API_KEY; 
 
 const PLAYLIST_ID =
 "PLe6uecFqdHnYTuMyPeyfZMbat1_R0V1Kz";
