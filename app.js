@@ -15,12 +15,12 @@ function onYouTubeIframeAPIReady() {
         width: '100%',
         playerVars: {
             'autoplay': 0,
-            'controls': 0,        
+            'controls': 0,        // Utilise nos contrôles personnalisés en bas
             'disablekb': 1,
-            'fs': 0,              
+            'fs': 0,              // Désactive le plein écran natif de YouTube
             'modestbranding': 1,
             'rel': 0,
-            'origin': window.location.origin // Supprime les erreurs postMessage de la console
+            'origin': window.location.origin // Élimine les avertissements CORS de la console
         },
         events: {
             'onReady': onPlayerReady,
@@ -29,7 +29,7 @@ function onYouTubeIframeAPIReady() {
     });
 }
 
-// 2. Initialisation une fois l'IFrame chargée
+// 2. Initialisation une fois l'IFrame prête
 async function onPlayerReady() {
     await fetchPlaylist();
     setupEventListeners();
@@ -55,6 +55,7 @@ async function fetchPlaylist() {
 function buildPlaybackOrder() {
     playbackOrder = [...originalPlaylist];
     if (isShuffle) {
+        // Mélange de Fisher-Yates
         for (let i = playbackOrder.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [playbackOrder[i], playbackOrder[j]] = [playbackOrder[j], playbackOrder[i]];
@@ -133,6 +134,7 @@ function onPlayerStateChange(event) {
         clearInterval(progressUpdateInterval);
     }
 
+    // Lecture continue automatique
     if (event.data === YT.PlayerState.ENDED) {
         if (isRepeat) {
             player.playVideo(); 
@@ -149,7 +151,6 @@ function nextTrack() {
     playTrack(playbackOrder[currentIndex]);
 }
 
-// Navigation corrigée : l'index précédent se gère selon la liste playbackOrder en cours
 function prevTrack() {
     if (playbackOrder.length === 0) return;
     currentIndex = (currentIndex - 1 + playbackOrder.length) % playbackOrder.length;
@@ -208,6 +209,7 @@ function setupEventListeners() {
         repeatBtn.classList.toggle('active', isRepeat);
     });
 
+    // Barre de progression cliquable
     const progressBar = document.getElementById('progress-bar');
     progressBar.addEventListener('input', (e) => {
         const total = player.getDuration();
@@ -217,6 +219,7 @@ function setupEventListeners() {
         }
     });
 
+    // Gestion du volume
     const volumeSlider = document.getElementById('volume-slider');
     volumeSlider.addEventListener('input', (e) => {
         const vol = e.target.value;
@@ -224,6 +227,7 @@ function setupEventListeners() {
         document.getElementById('volume-icon').innerText = vol == 0 ? "🔇" : vol < 40 ? "🔈" : "🔊";
     });
 
+    // Barre de recherche
     document.getElementById('search-bar').addEventListener('input', (e) => {
         const searchWord = e.target.value.toLowerCase().trim();
         displayPlaylist = originalPlaylist.filter(track => 
