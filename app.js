@@ -1,266 +1,286 @@
-const API_KEY = process.env.YOUTUBE_API_KEY; 
+const API_KEY = "AIzaSyAF2ixyvg8hzCSTKzEqPDZKDQyJKR5eGdU";
 
-const PLAYLIST_ID =
-"PLe6uecFqdHnYTuMyPeyfZMbat1_R0V1Kz";
+const PLAYLIST_ID = "PLe6uecFqdHnYTuMyPeyfZMbat1_R0V1Kz";
 
-let tracks = [];
-let current = 0;
+let playlist = [];
+let filteredPlaylist = [];
 
 let player;
+let currentIndex = 0;
 
 let shuffle = false;
-let repeat = false;
+let repeat = true;
 
 async function loadPlaylist() {
 
-const url =
+```
+let url =
 `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${API_KEY}`;
 
 const response = await fetch(url);
 
 const data = await response.json();
 
-tracks = data.items.map(item => ({
-id:item.snippet.resourceId.videoId,
-title:item.snippet.title,
-thumbnail:item.snippet.thumbnails.high.url
+playlist = data.items.map(item => ({
+    id: item.snippet.resourceId.videoId,
+    title: item.snippet.title,
+    thumbnail: item.snippet.thumbnails.high.url
 }));
+
+filteredPlaylist = [...playlist];
 
 renderPlaylist();
 
-loadTrack(0);
+if (playlist.length > 0) {
+    loadSong(0);
+}
+```
+
 }
 
-function renderPlaylist(){
+function renderPlaylist() {
 
+```
 const container =
-document.getElementById("playlist");
+    document.getElementById("playlist");
 
-container.innerHTML="";
+container.innerHTML = "";
 
-tracks.forEach((track,index)=>{
+filteredPlaylist.forEach(song => {
 
-const div=document.createElement("div");
+    const div =
+        document.createElement("div");
 
-div.className="track";
+    div.className = "song";
 
-div.innerHTML=`
-<img src="${track.thumbnail}">
-<div>${track.title}</div>
-`;
+    div.innerHTML = `
+        <img src="${song.thumbnail}">
+        <div class="song-info">
+            <p>${song.title}</p>
+        </div>
+    `;
 
-div.onclick=()=>loadTrack(index);
+    div.onclick = () => {
 
-container.appendChild(div);
+        const realIndex =
+            playlist.findIndex(
+                s => s.id === song.id
+            );
 
+        loadSong(realIndex);
+    };
+
+    container.appendChild(div);
 });
-
+  
+```
 }
-
-function loadTrack(index){
-
-current=index;
-
-document.getElementById("title").innerText =
-tracks[index].title;
-
-document.getElementById("cover").src =
-tracks[index].thumbnail;
-
-if(player){
-player.loadVideoById(
-tracks[index].id
+function onYouTubeIframeAPIReady() {
+```
+player = new YT.Player(
+    "youtube-player",
+    {
+        height: "1",
+        width: "1",
+        events: {
+            onReady: () => {
+                loadPlaylist();
+                setInterval(updateProgress,1000);
+            },
+            onStateChange: onPlayerStateChange
+        }
+    }
 );
-}
+```
 
 }
 
-function onYouTubeIframeAPIReady(){
+window.onYouTubeIframeAPIReady =
+onYouTubeIframeAPIReady;
 
-player=new YT.Player("player",{
+function loadSong(index){
 
-height:"1",
-width:"1",
+```
+currentIndex = index;
 
-events:{
-onReady:()=>{
+const song = playlist[index];
 
-loadPlaylist();
+document.getElementById("songTitle")
+    .textContent = song.title;
 
-player.setVolume(50);
+document.getElementById("cover")
+    .src = song.thumbnail;
 
-},
-onStateChange:onStateChange
+player.loadVideoById(song.id);
+```
+
 }
-});
+
+function playPause(){
+
+```
+const state = player.getPlayerState();
+
+if(state === 1){
+    player.pauseVideo();
+}else{
+    player.playVideo();
+}
+```
+
 }
 
-function onStateChange(event){
+function nextSong(){
 
-if(event.data===YT.PlayerState.ENDED){
-
+```
 if(shuffle){
 
-const random =
-Math.floor(
-Math.random()*tracks.length
+    currentIndex =
+        Math.floor(
+            Math.random()*playlist.length
+        );
+
+}else{
+
+    currentIndex++;
+
+    if(currentIndex >= playlist.length){
+
+        if(repeat){
+            currentIndex = 0;
+        }else{
+            return;
+        }
+    }
+}
+
+loadSong(currentIndex);
+```
+
+}
+
+function prevSong(){
+
+```
+currentIndex--;
+
+if(currentIndex < 0){
+    currentIndex = playlist.length - 1;
+}
+
+loadSong(currentIndex);
+```
+
+}
+
+function onPlayerStateChange(event){
+
+```
+if(event.data === YT.PlayerState.ENDED){
+    nextSong();
+}
+```
+
+}
+
+function updateProgress(){
+
+```
+if(!player || !player.getDuration) return;
+
+const duration =
+    player.getDuration();
+
+const current =
+    player.getCurrentTime();
+
+if(duration > 0){
+
+    document.getElementById(
+        "progressBar"
+    ).value =
+    current / duration * 100;
+}
+```
+
+}
+
+document
+.getElementById("progressBar")
+.addEventListener("input", e => {
+
+```
+const duration =
+    player.getDuration();
+
+player.seekTo(
+    duration * (e.target.value / 100),
+    true
 );
+```
 
-loadTrack(random);
+});
 
-return;
-}
+document
+.getElementById("volumeSlider")
+.addEventListener("input", e => {
 
-if(current < tracks.length-1){
+```
+player.setVolume(
+    e.target.value
+);
+```
 
-loadTrack(current+1);
+});
 
-}
-else if(repeat){
-
-loadTrack(0);
-
-}
-
-}
-}
+document
+.getElementById("playBtn")
+.onclick = playPause;
 
 document
 .getElementById("nextBtn")
-.onclick=()=>{
-
-if(shuffle){
-
-loadTrack(
-Math.floor(
-Math.random()*tracks.length
-)
-);
-
-return;
-}
-
-loadTrack(
-(current+1)%tracks.length
-);
-
-};
+.onclick = nextSong;
 
 document
 .getElementById("prevBtn")
-.onclick=()=>{
-
-loadTrack(
-(current-1+tracks.length)%tracks.length
-);
-
-};
+.onclick = prevSong;
 
 document
 .getElementById("shuffleBtn")
-.onclick=()=>{
+.onclick = () => {
 
-shuffle=!shuffle;
+```
+shuffle = !shuffle;
+```
 
 };
 
 document
 .getElementById("repeatBtn")
-.onclick=()=>{
+.onclick = () => {
 
-repeat=!repeat;
-
-};
-
-document
-.getElementById("playBtn")
-.onclick=()=>{
-
-const state =
-player.getPlayerState();
-
-if(state===1){
-
-player.pauseVideo();
-
-}else{
-
-player.playVideo();
-
-}
+```
+repeat = !repeat;
+```
 
 };
 
 document
-.getElementById("volume")
-.oninput=(e)=>{
+.getElementById("searchInput")
+.addEventListener("input", e => {
 
-player.setVolume(
-e.target.value
-);
-
-};
-
-setInterval(()=>{
-
-if(!player ||
-!player.getDuration) return;
-
-const currentTime =
-player.getCurrentTime();
-
-const duration =
-player.getDuration();
-
-document
-.getElementById("progress")
-.value=
-(currentTime/duration)*100;
-
-},500);
-
-document
-.getElementById("progress")
-.oninput=(e)=>{
-
-const duration=
-player.getDuration();
-
-player.seekTo(
-(duration*e.target.value)/100,
-true
-);
-
-};
-
-document
-.getElementById("search")
-.oninput=(e)=>{
-
+```
 const value =
-e.target.value.toLowerCase();
+    e.target.value.toLowerCase();
 
-document
-.querySelectorAll(".track")
-.forEach(track=>{
+filteredPlaylist =
+    playlist.filter(song =>
+        song.title
+        .toLowerCase()
+        .includes(value)
+    );
 
-track.style.display =
-track.innerText
-.toLowerCase()
-.includes(value)
-? "flex"
-: "none";
+renderPlaylist();
+```
 
 });
-
-};
-
-document
-.getElementById("miniBtn")
-.onclick=()=>{
-
-document
-.querySelector(".cover-container img")
-.classList.toggle("mini");
-
-};
