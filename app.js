@@ -13,7 +13,6 @@ let repeat = true;
 
 async function loadPlaylist() {
 
-```
 let url =
 `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${API_KEY}`;
 
@@ -34,13 +33,11 @@ renderPlaylist();
 if (playlist.length > 0) {
     loadSong(0);
 }
-```
 
 }
 
 function renderPlaylist() {
 
-```
 const container =
     document.getElementById("playlist");
 
@@ -73,10 +70,10 @@ filteredPlaylist.forEach(song => {
     container.appendChild(div);
 });
   
-```
+
 }
 function onYouTubeIframeAPIReady() {
-```
+
 player = new YT.Player(
     "youtube-player",
     {
@@ -91,7 +88,7 @@ player = new YT.Player(
         }
     }
 );
-```
+
 
 }
 
@@ -100,7 +97,7 @@ onYouTubeIframeAPIReady;
 
 function loadSong(index){
 
-```
+
 currentIndex = index;
 
 const song = playlist[index];
@@ -112,13 +109,13 @@ document.getElementById("cover")
     .src = song.thumbnail;
 
 player.loadVideoById(song.id);
-```
+
 
 }
 
 function playPause(){
 
-```
+
 const state = player.getPlayerState();
 
 if(state === 1){
@@ -126,13 +123,12 @@ if(state === 1){
 }else{
     player.playVideo();
 }
-```
 
 }
 
 function nextSong(){
 
-```
+
 if(shuffle){
 
     currentIndex =
@@ -155,13 +151,13 @@ if(shuffle){
 }
 
 loadSong(currentIndex);
-```
+
 
 }
 
 function prevSong(){
 
-```
+
 currentIndex--;
 
 if(currentIndex < 0){
@@ -169,23 +165,23 @@ if(currentIndex < 0){
 }
 
 loadSong(currentIndex);
-```
+
 
 }
 
 function onPlayerStateChange(event){
 
-```
+
 if(event.data === YT.PlayerState.ENDED){
     nextSong();
 }
-```
+
 
 }
 
 function updateProgress(){
 
-```
+
 if(!player || !player.getDuration) return;
 
 const duration =
@@ -201,7 +197,7 @@ if(duration > 0){
     ).value =
     current / duration * 100;
 }
-```
+
 
 }
 
@@ -209,7 +205,7 @@ document
 .getElementById("progressBar")
 .addEventListener("input", e => {
 
-```
+
 const duration =
     player.getDuration();
 
@@ -217,7 +213,7 @@ player.seekTo(
     duration * (e.target.value / 100),
     true
 );
-```
+
 
 });
 
@@ -225,11 +221,10 @@ document
 .getElementById("volumeSlider")
 .addEventListener("input", e => {
 
-```
 player.setVolume(
     e.target.value
 );
-```
+
 
 });
 
@@ -249,9 +244,9 @@ document
 .getElementById("shuffleBtn")
 .onclick = () => {
 
-```
+
 shuffle = !shuffle;
-```
+
 
 };
 
@@ -259,9 +254,9 @@ document
 .getElementById("repeatBtn")
 .onclick = () => {
 
-```
+
 repeat = !repeat;
-```
+
 
 };
 
@@ -269,7 +264,7 @@ document
 .getElementById("searchInput")
 .addEventListener("input", e => {
 
-```
+    
 const value =
     e.target.value.toLowerCase();
 
@@ -281,6 +276,5 @@ filteredPlaylist =
     );
 
 renderPlaylist();
-```
 
 });
