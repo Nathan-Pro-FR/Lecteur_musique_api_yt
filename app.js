@@ -1,280 +1,247 @@
-const API_KEY = "AIzaSyAF2ixyvg8hzCSTKzEqPDZKDQyJKR5eGdU";
-
-const PLAYLIST_ID = "PLe6uecFqdHnYTuMyPeyfZMbat1_R0V1Kz";
-
-let playlist = [];
-let filteredPlaylist = [];
-
 let player;
-let currentIndex = 0;
+let originalPlaylist = []; // Stocke la playlist de base
+let displayPlaylist = [];  // Stocke la playlist filtrée par la recherche
+let playbackOrder = [];    // Stocke l'ordre de lecture (normal ou mélangé)
+let currentIndex = 0;      // Index du morceau en cours dans playbackOrder
 
-let shuffle = false;
-let repeat = true;
+let isShuffle = false;
+let isRepeat = false;
+let progressUpdateInterval;
 
-async function loadPlaylist() {
-
-let url =
-`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${API_KEY}`;
-
-const response = await fetch(url);
-
-const data = await response.json();
-
-playlist = data.items.map(item => ({
-    id: item.snippet.resourceId.videoId,
-    title: item.snippet.title,
-    thumbnail: item.snippet.thumbnails.high.url
-}));
-
-filteredPlaylist = [...playlist];
-
-renderPlaylist();
-
-if (playlist.length > 0) {
-    loadSong(0);
-}
-
-}
-
-function renderPlaylist() {
-
-const container =
-    document.getElementById("playlist");
-
-container.innerHTML = "";
-
-filteredPlaylist.forEach(song => {
-
-    const div =
-        document.createElement("div");
-
-    div.className = "song";
-
-    div.innerHTML = `
-        <img src="${song.thumbnail}">
-        <div class="song-info">
-            <p>${song.title}</p>
-        </div>
-    `;
-
-    div.onclick = () => {
-
-        const realIndex =
-            playlist.findIndex(
-                s => s.id === song.id
-            );
-
-        loadSong(realIndex);
-    };
-
-    container.appendChild(div);
-});
-  
-
-}
+// 1. Appel automatique par l'IFrame API de YouTube
 function onYouTubeIframeAPIReady() {
-
-player = new YT.Player(
-    "youtube-player",
-    {
-        height: "1",
-        width: "1",
+    player = new YT.Player('youtube-iframe-player', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+            'autoplay': 0,
+            'controls': 0,        // Utilise nos propres contrôles HTML personnalisés
+            'disablekb': 1,
+            'fs': 0,              // Désactive le plein écran natif
+            'modestbranding': 1,
+            'rel': 0
+        },
         events: {
-            onReady: () => {
-                loadPlaylist();
-                setInterval(updateProgress,1000);
-            },
-            onStateChange: onPlayerStateChange
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+        }
+    });
+}
+
+// 2. Initialisation une fois l'IFrame chargée
+async function onPlayerReady() {
+    await fetchPlaylist();
+    setupEventListeners();
+}
+
+// 3. Récupération des titres via la fonction Netlify Serverless
+async function fetchPlaylist() {
+    try {
+        // En production, pointe automatiquement vers la Netlify function
+        const response = await fetch('/.netlify/functions/get-playlist');
+        if (!response.ok) throw new Error();
+        
+        originalPlaylist = await response.json();
+        displayPlaylist = [...originalPlaylist];
+        
+        buildPlaybackOrder();
+        renderPlaylist(displayPlaylist);
+    } catch (error) {
+        document.getElementById('playlist-tracks').innerHTML = `<div class="loading" style="color:red;">Erreur lors du chargement des données. Vérifiez votre clé API sur Netlify.</div>`;
+    }
+}
+
+// 4. Génération de l'ordre de lecture (Normal ou Aléatoire)
+function buildPlaybackOrder() {
+    playbackOrder = [...originalPlaylist];
+    if (isShuffle) {
+        // Algorithme de mélange de Fisher-Yates
+        for (let i = playbackOrder.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [playbackOrder[i], playbackOrder[j]] = [playbackOrder[j], playbackOrder[i]];
         }
     }
-);
-
-
+    // Repositionne le currentIndex sur le morceau actif s'il y en a un
+    const currentTrack = originalPlaylist[currentIndex];
+    if (currentTrack) {
+        currentIndex = playbackOrder.findIndex(t => t.id === currentTrack.id);
+    }
 }
 
-window.onYouTubeIframeAPIReady =
-onYouTubeIframeAPIReady;
+// 5. Affichage HTML de la liste
+function renderPlaylist(tracks) {
+    const container = document.getElementById('playlist-tracks');
+    container.innerHTML = '';
 
-function loadSong(index){
+    if(tracks.length === 0) {
+        container.innerHTML = '<div class="loading">Aucun résultat trouvé</div>';
+        return;
+    }
 
+    tracks.forEach((track) => {
+        const row = document.createElement('div');
+        row.classList.add('track-item');
+        row.setAttribute('data-id', track.id);
+        
+        // Active le style si c'est la vidéo en cours
+        const currentPlayingTrack = playbackOrder[currentIndex];
+        if (currentPlayingTrack && track.id === currentPlayingTrack.id) {
+            row.classList.add('active');
+        }
 
-currentIndex = index;
-
-const song = playlist[index];
-
-document.getElementById("songTitle")
-    .textContent = song.title;
-
-document.getElementById("cover")
-    .src = song.thumbnail;
-
-player.loadVideoById(song.id);
-
-
+        row.innerHTML = `
+            <img src="${track.thumbnail}" alt="thumb">
+            <span class="title">${track.title}</span>
+        `;
+        
+        row.addEventListener('click', () => {
+            // Trouve l'index dans l'ordre de lecture actuel
+            const index = playbackOrder.findIndex(t => t.id === track.id);
+            if (index !== -1) {
+                currentIndex = index;
+                playTrack(playbackOrder[currentIndex]);
+            }
+        });
+        
+        container.appendChild(row);
+    });
 }
 
-function playPause(){
+// 6. Lancement d'un morceau
+function playTrack(track) {
+    if (!track) return;
 
+    // Mise à jour de la barre du bas (Mini-player)
+    document.getElementById('current-title').innerText = track.title;
+    document.getElementById('current-cover').src = track.thumbnail;
 
-const state = player.getPlayerState();
+    // Met en surbrillance l'élément dans la liste visible
+    document.querySelectorAll('.track-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-id') === track.id) {
+            item.classList.add('active');
+        }
+    });
 
-if(state === 1){
-    player.pauseVideo();
-}else{
-    player.playVideo();
+    // Charge la vidéo YouTube
+    player.loadVideoById(track.id);
+    document.getElementById('btn-play-pause').innerText = "⏸️";
 }
 
+// 7. Événements de changement d'état du lecteur YouTube
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
+        document.getElementById('btn-play-pause').innerText = "⏸️";
+        startProgressTimer();
+    } else {
+        if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.BUFFERING) {
+            document.getElementById('btn-play-pause').innerText = "▶️";
+        }
+        clearInterval(progressUpdateInterval);
+    }
+
+    // Gestion automatique du morceau suivant (Lecture continue)
+    if (event.data === YT.PlayerState.ENDED) {
+        if (isRepeat) {
+            player.playVideo(); // Relance la même vidéo
+        } else {
+            nextTrack();
+        }
+    }
 }
 
-function nextSong(){
+// 8. Navigation de lecture
+function nextTrack() {
+    if (playbackOrder.length === 0) return;
+    currentIndex = (currentIndex + 1) % playbackOrder.length;
+    playTrack(playbackOrder[currentIndex]);
+}
 
+function prevTrack() {
+    if (playbackOrder.length === 0) return;
+    currentIndex = (currentIndex - 1 + playbackOrder.length) % playbackOrder.length;
+    playTrack(playbackOrder[currentIndex]);
+}
 
-if(shuffle){
+function togglePlay() {
+    const state = player.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+    } else {
+        player.playVideo();
+    }
+}
 
-    currentIndex =
-        Math.floor(
-            Math.random()*playlist.length
+// 9. Gestionnaires de la barre de progression & Temps
+function startProgressTimer() {
+    clearInterval(progressUpdateInterval);
+    progressUpdateInterval = setInterval(() => {
+        if (!player || typeof player.getCurrentTime !== 'function') return;
+        
+        const current = player.getCurrentTime();
+        const total = player.getDuration();
+        
+        if (total > 0) {
+            const pct = (current / total) * 100;
+            document.getElementById('progress-bar').value = pct;
+            document.getElementById('time-current').innerText = formatTime(current);
+            document.getElementById('time-total').innerText = formatTime(total);
+        }
+    }, 1000);
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// 10. Initialisation des Écouteurs d'Événements du DOM
+function setupEventListeners() {
+    // Boutons multimédias
+    document.getElementById('btn-play-pause').addEventListener('click', togglePlay);
+    document.getElementById('btn-next').addEventListener('click', nextTrack);
+    document.getElementById('btn-prev').addEventListener('click', prevTrack);
+
+    // Shuffle (Aléatoire)
+    const shuffleBtn = document.getElementById('btn-shuffle');
+    shuffleBtn.addEventListener('click', () => {
+        isShuffle = !isShuffle;
+        shuffleBtn.classList.toggle('active', isShuffle);
+        buildPlaybackOrder();
+    });
+
+    // Repeat (Boucle)
+    const repeatBtn = document.getElementById('btn-repeat');
+    repeatBtn.addEventListener('click', () => {
+        isRepeat = !isRepeat;
+        repeatBtn.classList.toggle('active', isRepeat);
+    });
+
+    // Barre de progression cliquable
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.addEventListener('input', (e) => {
+        const total = player.getDuration();
+        if (total > 0) {
+            const newTime = (e.target.value / 100) * total;
+            player.seekTo(newTime, true);
+        }
+    });
+
+    // Gestion du Volume
+    const volumeSlider = document.getElementById('volume-slider');
+    volumeSlider.addEventListener('input', (e) => {
+        const vol = e.target.value;
+        player.setVolume(vol);
+        document.getElementById('volume-icon').innerText = vol == 0 ? "🔇" : vol < 40 ? "🔈" : "🔊";
+    });
+
+    // Barre de recherche dans la playlist
+    document.getElementById('search-bar').addEventListener('input', (e) => {
+        const searchWord = e.target.value.toLowerCase().trim();
+        displayPlaylist = originalPlaylist.filter(track => 
+            track.title.toLowerCase().includes(searchWord)
         );
-
-}else{
-
-    currentIndex++;
-
-    if(currentIndex >= playlist.length){
-
-        if(repeat){
-            currentIndex = 0;
-        }else{
-            return;
-        }
-    }
+        renderPlaylist(displayPlaylist);
+    });
 }
-
-loadSong(currentIndex);
-
-
-}
-
-function prevSong(){
-
-
-currentIndex--;
-
-if(currentIndex < 0){
-    currentIndex = playlist.length - 1;
-}
-
-loadSong(currentIndex);
-
-
-}
-
-function onPlayerStateChange(event){
-
-
-if(event.data === YT.PlayerState.ENDED){
-    nextSong();
-}
-
-
-}
-
-function updateProgress(){
-
-
-if(!player || !player.getDuration) return;
-
-const duration =
-    player.getDuration();
-
-const current =
-    player.getCurrentTime();
-
-if(duration > 0){
-
-    document.getElementById(
-        "progressBar"
-    ).value =
-    current / duration * 100;
-}
-
-
-}
-
-document
-.getElementById("progressBar")
-.addEventListener("input", e => {
-
-
-const duration =
-    player.getDuration();
-
-player.seekTo(
-    duration * (e.target.value / 100),
-    true
-);
-
-
-});
-
-document
-.getElementById("volumeSlider")
-.addEventListener("input", e => {
-
-player.setVolume(
-    e.target.value
-);
-
-
-});
-
-document
-.getElementById("playBtn")
-.onclick = playPause;
-
-document
-.getElementById("nextBtn")
-.onclick = nextSong;
-
-document
-.getElementById("prevBtn")
-.onclick = prevSong;
-
-document
-.getElementById("shuffleBtn")
-.onclick = () => {
-
-
-shuffle = !shuffle;
-
-
-};
-
-document
-.getElementById("repeatBtn")
-.onclick = () => {
-
-
-repeat = !repeat;
-
-
-};
-
-document
-.getElementById("searchInput")
-.addEventListener("input", e => {
-
-    
-const value =
-    e.target.value.toLowerCase();
-
-filteredPlaylist =
-    playlist.filter(song =>
-        song.title
-        .toLowerCase()
-        .includes(value)
-    );
-
-renderPlaylist();
-
-});
