@@ -4,37 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YT Music Video Player</title>
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="app-container">
-        <!-- ZONE PRINCIPALE -->
         <main class="main-content">
             
-            <!-- Section Vidéo -->
             <section class="video-container">
                 <div class="video-wrapper">
                     <div id="youtube-iframe-player"></div>
                 </div>
             </section>
 
-            <!-- Section Playlist -->
             <section class="playlist-container">
                 <div class="search-box">
                     <input type="text" id="search-bar" placeholder="Rechercher un titre...">
                 </div>
                 <div id="playlist-tracks" class="tracks-list">
-                    <!-- Les titres seront injectés ici par JavaScript -->
                     <div class="loading">Chargement de la playlist...</div>
                 </div>
             </section>
 
         </main>
 
-        <!-- BARRE DE CONTRÔLE (BAS) -->
         <footer class="controls-bar">
-            <!-- Infos morceau actuel -->
             <div class="now-playing">
                 <img id="current-cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Pochette">
                 <div class="track-info">
@@ -42,7 +37,6 @@
                 </div>
             </div>
 
-            <!-- Boutons de contrôle & Progression -->
             <div class="player-core">
                 <div class="buttons">
                     <button id="btn-shuffle" title="Lecture aléatoire">🔀</button>
@@ -58,7 +52,6 @@
                 </div>
             </div>
 
-            <!-- Volume -->
             <div class="volume-container">
                 <span id="volume-icon">🔊</span>
                 <input type="range" id="volume-slider" min="0" max="100" value="100">
@@ -66,7 +59,6 @@
         </footer>
     </div>
 
-    <!-- Chargement de l'IFrame Player API de YouTube -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="app.js"></script>
 </body>
