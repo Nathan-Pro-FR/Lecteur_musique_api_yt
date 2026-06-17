@@ -140,7 +140,7 @@ body {
     font-size: 14px;
 }
 
-/* Barre Basse */
+/* Barre de Contrôles du Bas */
 .controls-bar {
     height: 90px;
     background-color: #101010;
@@ -255,7 +255,7 @@ body {
 .tracks-list::-webkit-scrollbar-track { background: transparent; }
 .tracks-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-/* MEDIA QUERIES RESPONSIVE */
+/* MEDIA QUERIES (RESPONSIVE) */
 @media (max-width: 992px) {
     .main-content {
         padding: 12px;
@@ -319,7 +319,7 @@ body {
         gap: 20px;
     }
     .volume-container {
-        display: none;
+        display: none; /* Le volume système natif du téléphone suffit sur mobile */
     }
 }
 
